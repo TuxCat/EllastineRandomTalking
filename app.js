@@ -1,9 +1,16 @@
 // ========================================
-// Random Topic Generator - Main App
+// Random Topic Generator & 아재개그 - Main App
 // ========================================
 
-// App State
-const state = {
+// ========================
+// Mode State
+// ========================
+let currentMode = 'rtg'; // 'rtg' | 'aje'
+
+// ========================
+// RTG State
+// ========================
+const rtgState = {
   categories: [],
   currentCategory: null,
   currentTopics: [],
@@ -12,8 +19,19 @@ const state = {
   maxHistory: 5
 };
 
-// DOM Elements
-const elements = {
+// ========================
+// Aje State
+// ========================
+const ajeState = {
+  jokes: [],
+  currentJoke: null,
+  answerVisible: false
+};
+
+// ========================
+// RTG DOM Elements
+// ========================
+const rtgElements = {
   categoryGrid: document.getElementById('categoryGrid'),
   topicText: document.getElementById('topicText'),
   topicDisplay: document.getElementById('topicDisplay'),
@@ -23,17 +41,28 @@ const elements = {
   historyList: document.getElementById('historyList')
 };
 
+// ========================
+// Aje DOM Elements
+// ========================
+const ajeElements = {
+  questionText: document.getElementById('ajeQuestionText'),
+  answerText: document.getElementById('ajeAnswerText'),
+  answerBox: document.getElementById('ajeAnswerBox'),
+  nextBtn: document.getElementById('ajeNextBtn'),
+  revealBtn: document.getElementById('ajeRevealBtn')
+};
+
 // ========================================
 // Initialization
 // ========================================
 
-// List of JSON files (manually defined for GitHub Pages compatibility)
-const JSON_FILES = [
-  'casual.json',
-  'business.json',
-  'family.json',
-  'couple_topics.json',
-  'essay_topics.json'
+// RTG JSON files with RTG_ prefix
+const RTG_JSON_FILES = [
+  'RTG_casual.json',
+  'RTG_business.json',
+  'RTG_family.json',
+  'RTG_couple.json',
+  'RTG_essay.json'
 ];
 
 /**
@@ -41,10 +70,16 @@ const JSON_FILES = [
  */
 async function init() {
   try {
-    // Load categories
+    // Setup mode tab listeners
+    setupModeTabs();
+
+    // Load RTG categories
     await loadCategories();
 
-    // Load history from localStorage
+    // Load Aje jokes
+    await loadAjeJokes();
+
+    // Load RTG history from localStorage
     loadHistory();
 
     // Setup event listeners
@@ -53,27 +88,62 @@ async function init() {
     console.log('✅ App initialized successfully');
   } catch (error) {
     console.error('❌ Error initializing app:', error);
-    showError('Failed to initialize application. Please refresh the page.');
   }
 }
 
 // ========================================
-// Category Management
+// Mode Tab Management
+// ========================================
+
+function setupModeTabs() {
+  const rtgTab = document.getElementById('tabRtg');
+  const ajeTab = document.getElementById('tabAje');
+
+  rtgTab.addEventListener('click', () => switchMode('rtg'));
+  ajeTab.addEventListener('click', () => switchMode('aje'));
+}
+
+function switchMode(mode) {
+  currentMode = mode;
+
+  const rtgTab = document.getElementById('tabRtg');
+  const ajeTab = document.getElementById('tabAje');
+  const rtgSection = document.getElementById('rtgSection');
+  const ajeSection = document.getElementById('ajeSection');
+
+  if (mode === 'rtg') {
+    rtgTab.classList.add('active');
+    ajeTab.classList.remove('active');
+    rtgSection.style.display = '';
+    ajeSection.style.display = 'none';
+  } else {
+    ajeTab.classList.add('active');
+    rtgTab.classList.remove('active');
+    ajeSection.style.display = '';
+    rtgSection.style.display = 'none';
+
+    // Show a joke if none loaded yet
+    if (ajeState.jokes.length > 0 && !ajeState.currentJoke) {
+      nextAjeJoke();
+    }
+  }
+}
+
+// ========================================
+// RTG - Category Management
 // ========================================
 
 /**
- * Load all categories from JSON files
+ * Load all RTG categories from JSON files
  */
 async function loadCategories() {
-  const categoryPromises = JSON_FILES.map(async (filename) => {
+  const categoryPromises = RTG_JSON_FILES.map(async (filename) => {
     try {
       const response = await fetch(filename);
       if (!response.ok) throw new Error(`Failed to load ${filename}`);
 
       const text = await response.text();
       const topics = parseTopics(text);
-
-      // Create category name from filename
       const categoryName = formatCategoryName(filename);
 
       return {
@@ -90,9 +160,9 @@ async function loadCategories() {
   });
 
   const categories = await Promise.all(categoryPromises);
-  state.categories = categories.filter(cat => cat !== null);
+  rtgState.categories = categories.filter(cat => cat !== null);
 
-  if (state.categories.length === 0) {
+  if (rtgState.categories.length === 0) {
     throw new Error('No categories loaded');
   }
 
@@ -100,8 +170,7 @@ async function loadCategories() {
 }
 
 /**
- * Parse topics from JSON file text
- * Handles line-based format
+ * Parse topics from JSON file text (line-based format)
  */
 function parseTopics(text) {
   return text
@@ -112,12 +181,16 @@ function parseTopics(text) {
 
 /**
  * Format category name from filename
- * Examples: 
- *   - business.json -> Business Topics
- *   - couple_topics.json -> Couple Topics
+ * - Strips RTG_ prefix
+ * - Capitalizes each word
+ * Examples:
+ *   RTG_casual.json  -> Casual
+ *   RTG_couple.json  -> Couple
+ *   RTG_essay.json   -> Essay
  */
 function formatCategoryName(filename) {
-  const name = filename.replace('.json', '');
+  // Remove .json and RTG_ prefix
+  const name = filename.replace('.json', '').replace(/^RTG_/i, '');
 
   // Split by underscore or camelCase
   const words = name.split(/[_-]|(?=[A-Z])/);
@@ -127,16 +200,16 @@ function formatCategoryName(filename) {
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
 
-  return formatted + ' Topics';
+  return formatted;
 }
 
 /**
  * Render category buttons
  */
 function renderCategories() {
-  elements.categoryGrid.innerHTML = '';
+  rtgElements.categoryGrid.innerHTML = '';
 
-  state.categories.forEach(category => {
+  rtgState.categories.forEach(category => {
     const button = document.createElement('button');
     button.className = 'category-btn';
     button.id = `category-${category.id}`;
@@ -146,25 +219,22 @@ function renderCategories() {
 
     button.addEventListener('click', () => selectCategory(category.id));
 
-    elements.categoryGrid.appendChild(button);
+    rtgElements.categoryGrid.appendChild(button);
   });
 }
 
 /**
- * Select a category
+ * Select a RTG category
  */
 function selectCategory(categoryId) {
-  const category = state.categories.find(cat => cat.id === categoryId);
+  const category = rtgState.categories.find(cat => cat.id === categoryId);
   if (!category) return;
 
-  state.currentCategory = category;
-  state.currentTopics = category.topics;
+  rtgState.currentCategory = category;
+  rtgState.currentTopics = category.topics;
 
-  // Update UI
   updateCategoryButtons(categoryId);
   enableGenerateButton();
-
-  // Auto-generate first topic
   generateTopic();
 }
 
@@ -172,7 +242,7 @@ function selectCategory(categoryId) {
  * Update category button states
  */
 function updateCategoryButtons(activeCategoryId) {
-  const buttons = elements.categoryGrid.querySelectorAll('.category-btn');
+  const buttons = rtgElements.categoryGrid.querySelectorAll('.category-btn');
   buttons.forEach(btn => {
     const categoryId = btn.getAttribute('data-category-id');
     if (categoryId === activeCategoryId) {
@@ -184,71 +254,62 @@ function updateCategoryButtons(activeCategoryId) {
 }
 
 // ========================================
-// Topic Generation
+// RTG - Topic Generation
 // ========================================
 
 /**
- * Generate a random topic
+ * Generate a random RTG topic
  */
 function generateTopic() {
-  if (!state.currentTopics || state.currentTopics.length === 0) {
+  if (!rtgState.currentTopics || rtgState.currentTopics.length === 0) {
     showError('No topics available for this category');
     return;
   }
 
-  // Get random topic
-  const randomIndex = Math.floor(Math.random() * state.currentTopics.length);
-  const topic = state.currentTopics[randomIndex];
+  const randomIndex = Math.floor(Math.random() * rtgState.currentTopics.length);
+  const topic = rtgState.currentTopics[randomIndex];
 
-  // Update state
-  state.currentTopic = topic;
-
-  // Display topic with animation
+  rtgState.currentTopic = topic;
   displayTopic(topic);
-
-  // Add to history
-  addToHistory(topic, state.currentCategory.name);
-
-  // Enable copy button
-  elements.copyBtn.disabled = false;
+  addToHistory(topic, rtgState.currentCategory.name);
+  rtgElements.copyBtn.disabled = false;
 }
 
 /**
- * Display topic with animation
+ * Display RTG topic with animation
  */
 function displayTopic(topic) {
-  const topicElement = elements.topicText;
+  const topicElement = rtgElements.topicText;
 
-  // Add animation class
   topicElement.classList.add('changing');
-
-  // Update text after animation starts
   setTimeout(() => {
     topicElement.textContent = topic;
     topicElement.classList.remove('topic-placeholder');
   }, 200);
-
-  // Remove animation class
   setTimeout(() => {
     topicElement.classList.remove('changing');
   }, 400);
 }
 
 /**
- * Show error message
+ * Show RTG error message
  */
 function showError(message) {
-  elements.topicText.textContent = message;
-  elements.topicText.classList.add('topic-placeholder');
+  rtgElements.topicText.textContent = message;
+  rtgElements.topicText.classList.add('topic-placeholder');
+}
+
+/**
+ * Enable generate button
+ */
+function enableGenerateButton() {
+  rtgElements.generateBtn.disabled = false;
 }
 
 // ========================================
-// History Management
+// RTG - History Management
 // ========================================
 
-/**
- * Add topic to history
- */
 function addToHistory(topic, categoryName) {
   const historyItem = {
     topic: topic,
@@ -256,33 +317,25 @@ function addToHistory(topic, categoryName) {
     timestamp: Date.now()
   };
 
-  // Add to beginning of array
-  state.history.unshift(historyItem);
+  rtgState.history.unshift(historyItem);
 
-  // Keep only max items
-  if (state.history.length > state.maxHistory) {
-    state.history = state.history.slice(0, state.maxHistory);
+  if (rtgState.history.length > rtgState.maxHistory) {
+    rtgState.history = rtgState.history.slice(0, rtgState.maxHistory);
   }
 
-  // Save to localStorage
   saveHistory();
-
-  // Render history
   renderHistory();
 }
 
-/**
- * Render history list
- */
 function renderHistory() {
-  if (state.history.length === 0) {
-    elements.historyList.innerHTML = '<li class="history-empty">No topics generated yet</li>';
+  if (rtgState.history.length === 0) {
+    rtgElements.historyList.innerHTML = '<li class="history-empty">No topics generated yet</li>';
     return;
   }
 
-  elements.historyList.innerHTML = '';
+  rtgElements.historyList.innerHTML = '';
 
-  state.history.forEach((item, index) => {
+  rtgState.history.forEach((item) => {
     const li = document.createElement('li');
     li.className = 'history-item';
     li.innerHTML = `
@@ -290,7 +343,6 @@ function renderHistory() {
       <div>${item.topic}</div>
     `;
 
-    // Add click to copy functionality
     li.addEventListener('click', () => {
       copyToClipboard(item.topic);
       showCopyFeedback();
@@ -299,38 +351,29 @@ function renderHistory() {
     li.setAttribute('title', 'Click to copy');
     li.style.cursor = 'pointer';
 
-    elements.historyList.appendChild(li);
+    rtgElements.historyList.appendChild(li);
   });
 }
 
-/**
- * Clear history
- */
 function clearHistory() {
-  state.history = [];
+  rtgState.history = [];
   saveHistory();
   renderHistory();
 }
 
-/**
- * Save history to localStorage
- */
 function saveHistory() {
   try {
-    localStorage.setItem('topicHistory', JSON.stringify(state.history));
+    localStorage.setItem('topicHistory', JSON.stringify(rtgState.history));
   } catch (error) {
     console.warn('Failed to save history:', error);
   }
 }
 
-/**
- * Load history from localStorage
- */
 function loadHistory() {
   try {
     const saved = localStorage.getItem('topicHistory');
     if (saved) {
-      state.history = JSON.parse(saved);
+      rtgState.history = JSON.parse(saved);
       renderHistory();
     }
   } catch (error) {
@@ -339,18 +382,75 @@ function loadHistory() {
 }
 
 // ========================================
-// Clipboard & Utilities
+// Aje (아재개그) Management
 // ========================================
 
 /**
- * Copy text to clipboard
+ * Load aje.json
  */
+async function loadAjeJokes() {
+  try {
+    const response = await fetch('aje.json');
+    if (!response.ok) throw new Error('Failed to load aje.json');
+    const data = await response.json();
+    // Filter out entries that have no answer
+    ajeState.jokes = data.filter(item => item.q && item.a);
+    console.log(`✅ Loaded ${ajeState.jokes.length} aje jokes`);
+  } catch (error) {
+    console.warn('⚠️ Could not load aje.json:', error);
+  }
+}
+
+/**
+ * Pick a random joke and display it
+ */
+function nextAjeJoke() {
+  if (!ajeState.jokes || ajeState.jokes.length === 0) return;
+
+  const randomIndex = Math.floor(Math.random() * ajeState.jokes.length);
+  ajeState.currentJoke = ajeState.jokes[randomIndex];
+  ajeState.answerVisible = false;
+
+  // Update question display with animation
+  const qEl = ajeElements.questionText;
+  qEl.classList.add('changing');
+  setTimeout(() => {
+    qEl.textContent = ajeState.currentJoke.q;
+    qEl.classList.remove('changing');
+  }, 200);
+
+  // Hide answer
+  const answerBox = ajeElements.answerBox;
+  answerBox.classList.remove('visible');
+  ajeElements.answerText.textContent = '';
+
+  // Reset reveal button
+  ajeElements.revealBtn.textContent = '정답 보기';
+  ajeElements.revealBtn.disabled = false;
+}
+
+/**
+ * Reveal the answer
+ */
+function revealAjeAnswer() {
+  if (!ajeState.currentJoke || ajeState.answerVisible) return;
+
+  ajeState.answerVisible = true;
+  ajeElements.answerText.textContent = ajeState.currentJoke.a;
+  ajeElements.answerBox.classList.add('visible');
+  ajeElements.revealBtn.textContent = '✓ 정답 공개됨';
+  ajeElements.revealBtn.disabled = true;
+}
+
+// ========================================
+// Clipboard & Utilities
+// ========================================
+
 async function copyToClipboard(text) {
   try {
     await navigator.clipboard.writeText(text);
     return true;
   } catch (error) {
-    // Fallback for older browsers
     const textarea = document.createElement('textarea');
     textarea.value = text;
     textarea.style.position = 'fixed';
@@ -370,42 +470,28 @@ async function copyToClipboard(text) {
   }
 }
 
-/**
- * Show copy feedback
- */
 function showCopyFeedback() {
-  const originalText = elements.copyBtn.innerHTML;
-  elements.copyBtn.innerHTML = '<span>✓</span><span>Copied!</span>';
-  elements.copyBtn.style.background = 'linear-gradient(135deg, hsl(140, 70%, 50%), hsl(160, 70%, 50%))';
+  const originalText = rtgElements.copyBtn.innerHTML;
+  rtgElements.copyBtn.innerHTML = '<span>✓</span><span>Copied!</span>';
+  rtgElements.copyBtn.style.background = 'linear-gradient(135deg, hsl(140, 70%, 50%), hsl(160, 70%, 50%))';
 
   setTimeout(() => {
-    elements.copyBtn.innerHTML = originalText;
-    elements.copyBtn.style.background = '';
+    rtgElements.copyBtn.innerHTML = originalText;
+    rtgElements.copyBtn.style.background = '';
   }, 2000);
-}
-
-/**
- * Enable generate button
- */
-function enableGenerateButton() {
-  elements.generateBtn.disabled = false;
 }
 
 // ========================================
 // Event Listeners
 // ========================================
 
-/**
- * Setup all event listeners
- */
 function setupEventListeners() {
-  // Generate button
-  elements.generateBtn.addEventListener('click', generateTopic);
+  // RTG Buttons
+  rtgElements.generateBtn.addEventListener('click', generateTopic);
 
-  // Copy button
-  elements.copyBtn.addEventListener('click', async () => {
-    if (state.currentTopic) {
-      const success = await copyToClipboard(state.currentTopic);
+  rtgElements.copyBtn.addEventListener('click', async () => {
+    if (rtgState.currentTopic) {
+      const success = await copyToClipboard(rtgState.currentTopic);
       if (success) {
         showCopyFeedback();
       } else {
@@ -414,31 +500,40 @@ function setupEventListeners() {
     }
   });
 
-  // Clear history button
-  elements.clearHistoryBtn.addEventListener('click', () => {
+  rtgElements.clearHistoryBtn.addEventListener('click', () => {
     if (confirm('Are you sure you want to clear your topic history?')) {
       clearHistory();
     }
   });
 
+  // Aje Buttons
+  ajeElements.nextBtn.addEventListener('click', nextAjeJoke);
+  ajeElements.revealBtn.addEventListener('click', revealAjeAnswer);
+
   // Keyboard shortcuts
   document.addEventListener('keydown', (e) => {
-    // Space or Enter to generate (when button is enabled)
-    if ((e.code === 'Space' || e.code === 'Enter') &&
-      !elements.generateBtn.disabled &&
-      e.target.tagName !== 'BUTTON') {
-      e.preventDefault();
-      generateTopic();
-    }
-
-    // C to copy (when copy button is enabled)
-    if (e.code === 'KeyC' &&
-      e.ctrlKey &&
-      !elements.copyBtn.disabled &&
-      state.currentTopic) {
-      e.preventDefault();
-      copyToClipboard(state.currentTopic);
-      showCopyFeedback();
+    if (currentMode === 'rtg') {
+      if ((e.code === 'Space' || e.code === 'Enter') &&
+        !rtgElements.generateBtn.disabled &&
+        e.target.tagName !== 'BUTTON') {
+        e.preventDefault();
+        generateTopic();
+      }
+      if (e.code === 'KeyC' &&
+        e.ctrlKey &&
+        !rtgElements.copyBtn.disabled &&
+        rtgState.currentTopic) {
+        e.preventDefault();
+        copyToClipboard(rtgState.currentTopic);
+        showCopyFeedback();
+      }
+    } else {
+      // Aje mode: Space/Enter for next joke, A for answer
+      if ((e.code === 'Space' || e.code === 'Enter') &&
+        e.target.tagName !== 'BUTTON') {
+        e.preventDefault();
+        nextAjeJoke();
+      }
     }
   });
 }
@@ -447,7 +542,6 @@ function setupEventListeners() {
 // Start Application
 // ========================================
 
-// Initialize when DOM is ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {

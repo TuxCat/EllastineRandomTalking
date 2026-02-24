@@ -1,20 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description"
-        content="Discover random conversation topics from various categories. Perfect for breaking the ice, deep conversations, or sparking creativity.">
-    <meta name="keywords" content="random topic generator, conversation starters, discussion topics, icebreakers">
+    <meta name="description" content="랜덤 대화토픽 생성기와 아재개그를 즐겨보세요. 다양한 카테고리에서 랜덤 주제를 뽑아보세요.">
+    <meta name="keywords" content="랜덤 토픽, 대화 주제, 아재개그, 대화 토픽 생성기">
     <meta name="author" content="Random Talking Subject">
 
     <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="Random Topic Generator">
-    <meta property="og:description" content="Generate random conversation topics from various categories">
+    <meta property="og:title" content="랜덤 대화토픽 & 아재개그">
+    <meta property="og:description" content="랜덤 대화토픽 생성기와 아재개그를 즐겨보세요">
     <meta property="og:type" content="website">
 
-    <title>Random Topic Generator - Spark Engaging Conversations</title>
+    <title>랜덤 대화토픽 & 아재개그</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,8 +28,8 @@
     <!-- Header -->
     <header class="header">
         <div class="container">
-            <h1>✨ Random Topic Generator</h1>
-            <p>Spark engaging conversations with random topics from various categories</p>
+            <h1>✨ 랜덤 대화토픽 & 아재개그</h1>
+            <p>다양한 카테고리에서 랜덤 주제를 뽑거나 아재개그를 즐겨보세요</p>
         </div>
     </header>
 
@@ -38,51 +37,101 @@
     <main class="main">
         <div class="container">
 
-            <!-- Category Selection -->
-            <section class="category-section">
-                <div class="card">
-                    <h2 class="text-center">Choose a Category</h2>
-                    <div class="category-grid" id="categoryGrid">
-                        <!-- Categories will be dynamically loaded here -->
-                        <div class="loading-placeholder">Loading categories...</div>
+            <!-- Mode Tabs -->
+            <div class="mode-tabs">
+                <button class="mode-tab active" id="tabRtg">🎲 랜덤 대화토픽 생성기</button>
+                <button class="mode-tab" id="tabAje">😄 아재개그</button>
+            </div>
+
+            <!-- ===================== -->
+            <!-- RTG Section           -->
+            <!-- ===================== -->
+            <div id="rtgSection">
+
+                <!-- Category Selection -->
+                <section class="category-section">
+                    <div class="card">
+                        <h2 class="text-center">카테고리 선택</h2>
+                        <div class="category-grid" id="categoryGrid">
+                            <!-- Categories will be dynamically loaded here -->
+                            <div class="loading-placeholder">Loading categories...</div>
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            <!-- Topic Display -->
-            <section class="topic-section">
-                <div class="card topic-display" id="topicDisplay">
-                    <p class="topic-text topic-placeholder" id="topicText">
-                        Select a category and click "Generate Topic" to get started!
-                    </p>
-                </div>
+                <!-- Topic Display -->
+                <section class="topic-section">
+                    <div class="card topic-display" id="topicDisplay">
+                        <p class="topic-text topic-placeholder" id="topicText">
+                            카테고리를 선택하고 "토픽 생성" 버튼을 눌러보세요!
+                        </p>
+                    </div>
 
-                <!-- Action Buttons -->
-                <div class="btn-group">
-                    <button class="btn btn-primary" id="generateBtn" disabled>
-                        <span>🎲</span>
-                        <span>Generate Topic</span>
-                    </button>
-                    <button class="btn btn-secondary" id="copyBtn" disabled>
-                        <span>📋</span>
-                        <span>Copy</span>
-                    </button>
-                    <button class="btn btn-secondary" id="clearHistoryBtn">
-                        <span>🗑️</span>
-                        <span>Clear History</span>
-                    </button>
-                </div>
-            </section>
+                    <!-- Action Buttons -->
+                    <div class="btn-group">
+                        <button class="btn btn-primary" id="generateBtn" disabled>
+                            <span>🎲</span>
+                            <span>토픽 생성</span>
+                        </button>
+                        <button class="btn btn-secondary" id="copyBtn" disabled>
+                            <span>📋</span>
+                            <span>Copy</span>
+                        </button>
+                        <button class="btn btn-secondary" id="clearHistoryBtn">
+                            <span>🗑️</span>
+                            <span>기록 삭제</span>
+                        </button>
+                    </div>
+                </section>
 
-            <!-- Topic History -->
-            <section class="history-section">
-                <div class="card">
-                    <h3 class="text-center">Recent Topics</h3>
-                    <ul class="history-list" id="historyList">
-                        <li class="history-empty">No topics generated yet</li>
-                    </ul>
-                </div>
-            </section>
+                <!-- Topic History -->
+                <section class="history-section">
+                    <div class="card">
+                        <h3 class="text-center">최근 토픽</h3>
+                        <ul class="history-list" id="historyList">
+                            <li class="history-empty">아직 생성된 토픽이 없어요</li>
+                        </ul>
+                    </div>
+                </section>
+
+            </div><!-- /#rtgSection -->
+
+            <!-- ===================== -->
+            <!-- Aje Section           -->
+            <!-- ===================== -->
+            <div id="ajeSection" style="display:none;">
+
+                <!-- Question Display -->
+                <section class="topic-section">
+                    <div class="card topic-display aje-question-card">
+                        <div class="aje-label">문제</div>
+                        <p class="topic-text topic-placeholder" id="ajeQuestionText">
+                            "다음 문제" 버튼을 눌러 아재개그를 시작해보세요!
+                        </p>
+                    </div>
+
+                    <!-- Answer Box -->
+                    <div class="aje-answer-box" id="ajeAnswerBox">
+                        <div class="aje-answer-inner">
+                            <div class="aje-answer-label">정답</div>
+                            <p class="aje-answer-text" id="ajeAnswerText"></p>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="btn-group">
+                        <button class="btn btn-primary" id="ajeNextBtn">
+                            <span>🎲</span>
+                            <span>다음 문제</span>
+                        </button>
+                        <button class="btn btn-reveal" id="ajeRevealBtn">
+                            <span>💡</span>
+                            <span>정답 보기</span>
+                        </button>
+                    </div>
+                </section>
+
+            </div><!-- /#ajeSection -->
 
         </div>
     </main>
@@ -95,7 +144,7 @@
                 <a href="https://github.com" target="_blank" rel="noopener noreferrer">View on GitHub</a>
             </p>
             <p style="margin-top: 0.5rem; font-size: 0.875rem;">
-                Perfect for icebreakers, deep conversations, and creative inspiration
+                대화를 더 즐겁게, 웃음을 더 풍성하게
             </p>
         </div>
     </footer>
