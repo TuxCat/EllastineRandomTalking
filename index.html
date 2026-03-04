@@ -4,16 +4,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="랜덤 대화토픽 생성기와 아재개그를 즐겨보세요. 다양한 카테고리에서 랜덤 주제를 뽑아보세요.">
-    <meta name="keywords" content="랜덤 토픽, 대화 주제, 아재개그, 대화 토픽 생성기">
+    <meta name="description" content="랜덤 대화토픽 생성기, 아재개그, GRE Analytical Writing 연습까지. 다양한 카테고리에서 랜덤 주제를 뽑아보세요.">
+    <meta name="keywords" content="랜덤 토픽, 대화 주제, 아재개그, GRE writing, 대화 토픽 생성기">
     <meta name="author" content="Random Talking Subject">
 
     <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="랜덤 대화토픽 & 아재개그">
-    <meta property="og:description" content="랜덤 대화토픽 생성기와 아재개그를 즐겨보세요">
+    <meta property="og:title" content="랜덤 대화토픽 & 아재개그 & GRE Writing">
+    <meta property="og:description" content="랜덤 대화토픽 생성기, 아재개그, GRE Writing 연습">
     <meta property="og:type" content="website">
 
-    <title>랜덤 대화토픽 & 아재개그</title>
+    <title>랜덤 대화토픽 & 아재개그 & GRE Writing</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,7 +29,7 @@
     <header class="header">
         <div class="container">
             <h1>✨ 랜덤 대화토픽 & 아재개그</h1>
-            <p>다양한 카테고리에서 랜덤 주제를 뽑거나 아재개그를 즐겨보세요</p>
+            <p>대화토픽 생성 · 아재개그 · GRE Analytical Writing 연습</p>
         </div>
     </header>
 
@@ -39,8 +39,9 @@
 
             <!-- Mode Tabs -->
             <div class="mode-tabs">
-                <button class="mode-tab active" id="tabRtg">🎲 랜덤 대화토픽 생성기</button>
+                <button class="mode-tab active" id="tabRtg">🎲 랜덤 대화토픽</button>
                 <button class="mode-tab" id="tabAje">😄 아재개그</button>
+                <button class="mode-tab" id="tabGre">📝 GRE Writing</button>
             </div>
 
             <!-- ===================== -->
@@ -132,6 +133,40 @@
                 </section>
 
             </div><!-- /#ajeSection -->
+
+            <!-- ===================== -->
+            <!-- GRE Section           -->
+            <!-- ===================== -->
+            <div id="greSection" style="display:none;">
+
+                <!-- Topic Display -->
+                <section class="topic-section">
+                    <div class="card gre-card">
+                        <div class="gre-topic-label">Topic</div>
+                        <p class="gre-topic-text topic-placeholder" id="greTopicText">
+                            "다음 토픽" 버튼을 눌러 GRE Writing 토픽을 시작해보세요!
+                        </p>
+                        <!-- Direction Box (always visible after first topic) -->
+                        <div class="gre-direction-box" id="greDirectionBox" style="display:none;">
+                            <div class="gre-direction-label">Direction</div>
+                            <p class="gre-direction-text" id="greDirectionText"></p>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="btn-group">
+                        <button class="btn btn-primary" id="greNextBtn">
+                            <span>🎲</span>
+                            <span>다음 토픽</span>
+                        </button>
+                        <button class="btn btn-secondary" id="greCopyBtn" disabled>
+                            <span>📋</span>
+                            <span>Copy Topic</span>
+                        </button>
+                    </div>
+                </section>
+
+            </div><!-- /#greSection -->
 
         </div>
     </main>

@@ -677,3 +677,71 @@ p {
   cursor: not-allowed;
   transform: none !important;
 }
+
+/* ===================================
+   GRE Analytical Writing
+   =================================== */
+
+/* Card */
+.gre-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+/* Topic label badge */
+.gre-topic-label {
+  display: inline-block;
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: white;
+  background: var(--color-gradient-1);
+  border-radius: var(--radius-full);
+  padding: 0.2em 0.9em;
+  width: fit-content;
+}
+
+/* Topic text */
+.gre-topic-text {
+  font-size: clamp(var(--font-size-lg), 2.5vw, var(--font-size-xl));
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  line-height: 1.7;
+  transition: opacity 0.2s ease;
+}
+
+.gre-topic-text.gre-changing {
+  opacity: 0;
+}
+
+/* Direction box */
+.gre-direction-box {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--spacing-lg);
+  animation: fadeInUp 0.4s ease;
+}
+
+/* Direction label badge */
+.gre-direction-label {
+  display: inline-block;
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding: 0.2em 0.9em;
+  width: fit-content;
+  margin-bottom: var(--spacing-sm);
+}
+
+/* Direction text */
+.gre-direction-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.8;
+  font-style: italic;
+}

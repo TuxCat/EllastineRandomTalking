@@ -1,11 +1,11 @@
 // ========================================
-// Random Topic Generator & 아재개그 - Main App
+// Random Topic Generator, 아재개그 & GRE Writing - Main App
 // ========================================
 
 // ========================
 // Mode State
 // ========================
-let currentMode = 'rtg'; // 'rtg' | 'aje'
+let currentMode = 'rtg'; // 'rtg' | 'aje' | 'gre'
 
 // ========================
 // RTG State
@@ -52,6 +52,25 @@ const ajeElements = {
   revealBtn: document.getElementById('ajeRevealBtn')
 };
 
+// ========================
+// GRE State
+// ========================
+const greState = {
+  topics: [],
+  currentTopic: null
+};
+
+// ========================
+// GRE DOM Elements
+// ========================
+const greElements = {
+  topicText: document.getElementById('greTopicText'),
+  directionText: document.getElementById('greDirectionText'),
+  directionBox: document.getElementById('greDirectionBox'),
+  nextBtn: document.getElementById('greNextBtn'),
+  copyBtn: document.getElementById('greCopyBtn')
+};
+
 // ========================================
 // Initialization
 // ========================================
@@ -79,6 +98,9 @@ async function init() {
     // Load Aje jokes
     await loadAjeJokes();
 
+    // Load GRE topics
+    await loadGreTopics();
+
     // Load RTG history from localStorage
     loadHistory();
 
@@ -98,9 +120,11 @@ async function init() {
 function setupModeTabs() {
   const rtgTab = document.getElementById('tabRtg');
   const ajeTab = document.getElementById('tabAje');
+  const greTab = document.getElementById('tabGre');
 
   rtgTab.addEventListener('click', () => switchMode('rtg'));
   ajeTab.addEventListener('click', () => switchMode('aje'));
+  greTab.addEventListener('click', () => switchMode('gre'));
 }
 
 function switchMode(mode) {
@@ -108,23 +132,32 @@ function switchMode(mode) {
 
   const rtgTab = document.getElementById('tabRtg');
   const ajeTab = document.getElementById('tabAje');
+  const greTab = document.getElementById('tabGre');
   const rtgSection = document.getElementById('rtgSection');
   const ajeSection = document.getElementById('ajeSection');
+  const greSection = document.getElementById('greSection');
+
+  // Reset all tabs
+  [rtgTab, ajeTab, greTab].forEach(t => t.classList.remove('active'));
+  // Hide all sections
+  rtgSection.style.display = 'none';
+  ajeSection.style.display = 'none';
+  greSection.style.display = 'none';
 
   if (mode === 'rtg') {
     rtgTab.classList.add('active');
-    ajeTab.classList.remove('active');
     rtgSection.style.display = '';
-    ajeSection.style.display = 'none';
-  } else {
+  } else if (mode === 'aje') {
     ajeTab.classList.add('active');
-    rtgTab.classList.remove('active');
     ajeSection.style.display = '';
-    rtgSection.style.display = 'none';
-
-    // Show a joke if none loaded yet
     if (ajeState.jokes.length > 0 && !ajeState.currentJoke) {
       nextAjeJoke();
+    }
+  } else if (mode === 'gre') {
+    greTab.classList.add('active');
+    greSection.style.display = '';
+    if (greState.topics.length > 0 && !greState.currentTopic) {
+      nextGreTopic();
     }
   }
 }
@@ -443,6 +476,70 @@ function revealAjeAnswer() {
 }
 
 // ========================================
+// GRE Analytical Writing Management
+// ========================================
+
+/**
+ * Load GRE topics from gre_topics.json
+ */
+async function loadGreTopics() {
+  try {
+    const response = await fetch('gre_topics.json');
+    if (!response.ok) throw new Error('Failed to load gre_topics.json');
+    const data = await response.json();
+    greState.topics = data.filter(item => item.topic && item.direction);
+    console.log(`✅ Loaded ${greState.topics.length} GRE topics`);
+  } catch (error) {
+    console.warn('⚠️ Could not load gre_topics.json:', error);
+  }
+}
+
+/**
+ * Show a random GRE topic
+ */
+function nextGreTopic() {
+  if (!greState.topics || greState.topics.length === 0) return;
+
+  const randomIndex = Math.floor(Math.random() * greState.topics.length);
+  greState.currentTopic = greState.topics[randomIndex];
+
+  // Update topic text with fade animation
+  const topicEl = greElements.topicText;
+  topicEl.classList.remove('topic-placeholder');
+  topicEl.classList.add('gre-changing');
+
+  setTimeout(() => {
+    topicEl.textContent = greState.currentTopic.topic;
+    topicEl.classList.remove('gre-changing');
+  }, 200);
+
+  // Show direction
+  greElements.directionText.textContent = greState.currentTopic.direction;
+  greElements.directionBox.style.display = '';
+
+  // Enable copy button
+  greElements.copyBtn.disabled = false;
+}
+
+/**
+ * Copy GRE topic to clipboard
+ */
+async function copyGreTopic() {
+  if (!greState.currentTopic) return;
+  const text = greState.currentTopic.topic + '\n\n' + greState.currentTopic.direction;
+  const success = await copyToClipboard(text);
+  if (success) {
+    const originalHTML = greElements.copyBtn.innerHTML;
+    greElements.copyBtn.innerHTML = '<span>✓</span><span>Copied!</span>';
+    greElements.copyBtn.style.background = 'linear-gradient(135deg, hsl(140, 70%, 50%), hsl(160, 70%, 50%))';
+    setTimeout(() => {
+      greElements.copyBtn.innerHTML = originalHTML;
+      greElements.copyBtn.style.background = '';
+    }, 2000);
+  }
+}
+
+// ========================================
 // Clipboard & Utilities
 // ========================================
 
@@ -510,6 +607,10 @@ function setupEventListeners() {
   ajeElements.nextBtn.addEventListener('click', nextAjeJoke);
   ajeElements.revealBtn.addEventListener('click', revealAjeAnswer);
 
+  // GRE Buttons
+  greElements.nextBtn.addEventListener('click', nextGreTopic);
+  greElements.copyBtn.addEventListener('click', copyGreTopic);
+
   // Keyboard shortcuts
   document.addEventListener('keydown', (e) => {
     if (currentMode === 'rtg') {
@@ -527,12 +628,22 @@ function setupEventListeners() {
         copyToClipboard(rtgState.currentTopic);
         showCopyFeedback();
       }
-    } else {
-      // Aje mode: Space/Enter for next joke, A for answer
+    } else if (currentMode === 'aje') {
       if ((e.code === 'Space' || e.code === 'Enter') &&
         e.target.tagName !== 'BUTTON') {
         e.preventDefault();
         nextAjeJoke();
+      }
+    } else if (currentMode === 'gre') {
+      // Space/Enter = next topic, C = copy
+      if ((e.code === 'Space' || e.code === 'Enter') &&
+        e.target.tagName !== 'BUTTON') {
+        e.preventDefault();
+        nextGreTopic();
+      }
+      if (e.code === 'KeyC' && e.ctrlKey && greState.currentTopic) {
+        e.preventDefault();
+        copyGreTopic();
       }
     }
   });
